@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --teal: #0d9488;
+  --teal-dark: #0f766e;
+  --amber: #f59e0b;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100;
+}
+
+.card {
+  @apply bg-white dark:bg-slate-800 rounded-xl2 shadow-sm p-5 border border-slate-100 dark:border-slate-700;
+}
+
+.btn-primary {
+  @apply bg-teal text-white px-4 py-2 rounded-lg font-medium hover:bg-teal-dark transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-amber text-slate-900 px-4 py-2 rounded-lg font-medium hover:bg-amber-dark transition-colors;
+}
+
+.btn-outline {
+  @apply border border-teal text-teal-dark px-4 py-2 rounded-lg font-medium hover:bg-teal hover:text-white transition-colors dark:text-teal;
+}
+
+.input {
+  @apply w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal;
+}
+
+.badge-high { @apply bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300; }
+.badge-medium { @apply bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300; }
+.badge-low { @apply bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300; }
