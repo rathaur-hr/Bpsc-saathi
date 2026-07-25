@@ -1,0 +1,238 @@
+// BPSC Saathi - Prisma schema (PostgreSQL)
+// Owner: Harshit Rathaur
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ExamStage {
+  PRELIMS
+  MAINS
+  PRELIMS_MAINS
+  INTERVIEW
+}
+
+enum PrepLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum TopicStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  REVISED
+}
+
+enum OtpPurpose {
+  REGISTER
+  RESET_PASSWORD
+}
+
+enum ExamPhase {
+  PRELIMS
+  MAINS
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  passwordHash         String
+  isVerified           Boolean   @default(false)
+  emailNotifications   Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+
+  // Onboarding / profile
+  targetExamStage      ExamStage?
+  targetYear           Int?
+  prepLevel            PrepLevel?
+  dailyStudyHours       String?   // e.g. "2-4 hours" - kept as free text to match onboarding options
+  optionalSubject       String?
+  preferredLanguage     String?   @default("en")
+  onboardingCompleted   Boolean   @default(false)
+
+  tasks                StudyTask[]
+  syllabusProgress     UserSyllabusProgress[]
+  mockAttempts         MockAttempt[]
+  bookmarks            Bookmark[]
+  reminderLog          ReminderLog?
+
+  @@map("users")
+}
+
+model OtpVerification {
+  id         String     @id @default(cuid())
+  email      String
+  otp        String
+  purpose    OtpPurpose
+  attempts   Int        @default(0)
+  expiresAt  DateTime
+  createdAt  DateTime   @default(now())
+
+  @@index([email])
+  @@map("otp_verifications")
+}
+
+model ReminderLog {
+  userId       String   @id
+  lastSentDate DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reminder_logs")
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  nameEn      String
+  nameHi      String
+  category    String    @default("general") // general | bihar-special
+  topics      Topic[]
+  questions   Question[]
+  currentAffairs CurrentAffair[]
+  mockAttempts MockAttempt[]
+  tasks       StudyTask[]
+
+  @@map("subjects")
+}
+
+model Topic {
+  id          String    @id @default(cuid())
+  subjectId   String
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  titleEn     String
+  titleHi     String
+  contentEn   String?   @db.Text
+  contentHi   String?   @db.Text
+  examPhase   ExamPhase @default(PRELIMS)
+  progress    UserSyllabusProgress[]
+
+  @@map("topics")
+}
+
+model UserSyllabusProgress {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId   String
+  topic     Topic       @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  status    TopicStatus @default(NOT_STARTED)
+  pyqSolved Boolean     @default(false)
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, topicId])
+  @@map("user_syllabus_progress")
+}
+
+// Question bank doubles as PYQ database and mock-test source.
+// isPYQ + year distinguish real previous-year questions from practice-only questions.
+model Question {
+  id             String   @id @default(cuid())
+  subjectId      String
+  subject        Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questionEn     String   @db.Text
+  questionHi     String   @db.Text
+  optionAEn      String
+  optionBEn      String
+  optionCEn      String
+  optionDEn      String
+  optionAHi      String
+  optionBHi      String
+  optionCHi      String
+  optionDHi      String
+  correctOption  String   // "A" | "B" | "C" | "D"
+  explanationEn  String?  @db.Text
+  explanationHi  String?  @db.Text
+  isPYQ          Boolean  @default(false)
+  pyqYear        Int?
+  examPhase      ExamPhase @default(PRELIMS)
+  difficulty     String?  @default("medium") // easy | medium | hard
+  bookmarks      Bookmark[]
+
+  @@map("questions")
+}
+
+model MockAttempt {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId       String?
+  subject         Subject? @relation(fields: [subjectId], references: [id])
+  totalQuestions  Int
+  correctAnswers  Int
+  score           Float
+  reviewJson      String?  @db.Text // per-question review (question, your answer, correct answer) - JSON encoded
+  takenAt         DateTime @default(now())
+
+  @@map("mock_attempts")
+}
+
+model Bookmark {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, questionId])
+  @@map("bookmarks")
+}
+
+model StudyTask {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId  String?
+  subject    Subject?   @relation(fields: [subjectId], references: [id])
+  title      String
+  priority   Priority   @default(MEDIUM)
+  dueDate    DateTime?
+  status     TaskStatus @default(PENDING)
+  createdAt  DateTime   @default(now())
+
+  @@map("study_tasks")
+}
+
+model CurrentAffair {
+  id           String    @id @default(cuid())
+  title        String
+  summary      String    @db.Text
+  category     String    // Bihar | National | International | Polity | Economy | Science | Environment | Schemes
+  subjectId    String?
+  subject      Subject?  @relation(fields: [subjectId], references: [id])
+  source       String?
+  sourceUrl    String?
+  publishedAt  DateTime  @default(now())
+
+  @@map("current_affairs")
+}
+
+model BiharDistrict {
+  id             String  @id @default(cuid())
+  name           String  @unique
+  headquarters   String
+  areaSqKm       Float?
+  population     Int?
+  majorRivers    String?
+  keyFacts       String  @db.Text
+
+  @@map("bihar_districts")
+}
