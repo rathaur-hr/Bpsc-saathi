@@ -73,6 +73,8 @@ model User {
   syllabusProgress     UserSyllabusProgress[]
   mockAttempts         MockAttempt[]
   bookmarks            Bookmark[]
+  communityPosts       CommunityPost[]
+  comments             Comment[]
   reminderLog          ReminderLog?
 
   @@map("users")
@@ -235,4 +237,29 @@ model BiharDistrict {
   keyFacts       String  @db.Text
 
   @@map("bihar_districts")
+}
+
+model CommunityPost {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String    // History | Polity | Geography | Economy | Current Affairs | Bihar Special | Mains Answer Writing | Study Planning | General Discussion
+  title     String
+  content   String    @db.Text
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+
+  @@map("community_posts")
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String        @db.Text
+  createdAt DateTime      @default(now())
+
+  @@map("comments")
 }

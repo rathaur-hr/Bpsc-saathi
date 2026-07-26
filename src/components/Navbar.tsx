@@ -11,6 +11,7 @@ const LOGGED_IN_LINKS = [
   { href: "/current-affairs", label: "Current Affairs" },
   { href: "/bihar-special", label: "Bihar Special" },
   { href: "/planner", label: "Planner" },
+  { href: "/community", label: "Community" },
 ];
 
 export default async function Navbar() {

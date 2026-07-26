@@ -3,7 +3,7 @@ import { jwtVerify } from "jose";
 
 const PROTECTED_PREFIXES = [
   "/dashboard", "/planner", "/syllabus", "/pyq", "/mock-tests",
-  "/current-affairs", "/bihar-special", "/settings", "/onboarding",
+  "/current-affairs", "/bihar-special", "/settings", "/onboarding", "/community",
 ];
 
 function getSecret(): Uint8Array {
@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*", "/planner/:path*", "/syllabus/:path*", "/pyq/:path*",
-    "/mock-tests/:path*", "/current-affairs/:path*", "/bihar-special/:path*",
+    "/mock-tests/:path*", "/current-affairs/:path*", "/bihar-special/:path*", "/community/:path*",
     "/settings/:path*", "/onboarding/:path*",
   ],
 };
